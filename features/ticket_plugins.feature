@@ -69,6 +69,14 @@ Feature: Plugin System
     Then the command should succeed
     And the output should match a ticket ID pattern
 
+  Scenario: Symlink plugin alias works for list command
+    Given a clean tickets directory
+    And a ticket exists with ID "sym-0001" and title "Symlink test ticket"
+    When I run "ticket list"
+    Then the command should succeed
+    And the output should contain "sym-0001"
+    And the output should contain "Symlink test ticket"
+
   Scenario: Built-in commands still work with plugins present
     Given a clean tickets directory
     And a plugin "tk-hello" that outputs "Hello!"
