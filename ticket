@@ -1344,7 +1344,18 @@ if [[ $_tk_super -eq 0 && -n "${1:-}" && "${1:-}" != "help" && "${1:-}" != "--he
         _plugin="${_prefix}-$1"
         if command -v "$_plugin" &>/dev/null; then
             # Export context for plugins
-            export TICKETS_DIR="${TICKETS_DIR:-$(find_tickets_dir 2>/dev/null || echo "")}"
+            if [[ -z "${TICKETS_DIR:-}" ]]; then
+                if _found=$(find_tickets_dir 2>/dev/null); then
+                    TICKETS_DIR="$_found"
+                fi
+            fi
+            if [[ -n "${TICKETS_DIR:-}" ]]; then
+                if [[ ! -d "$TICKETS_DIR" ]]; then
+                    echo "Error: tickets directory '$TICKETS_DIR' does not exist" >&2
+                    exit 1
+                fi
+                export TICKETS_DIR
+            fi
             export TK_SCRIPT="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
             shift
             exec "$_plugin" "$@"
