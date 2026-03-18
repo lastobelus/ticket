@@ -184,6 +184,15 @@ def step_in_subdirectory(context, subdir):
     context.working_dir = str(subdir_path)
 
 
+@given(r'the tickets config has prefix "(?P<prefix>[^"]+)"')
+def step_tickets_config_has_prefix(context, prefix):
+    """Write a repo-local tickets config with a prefix."""
+    cwd = Path(getattr(context, 'working_dir', context.test_dir))
+    tickets_dir = cwd / '.tickets'
+    tickets_dir.mkdir(parents=True, exist_ok=True)
+    (tickets_dir / 'config').write_text(f'prefix: {prefix}\n')
+
+
 @given(r'a separate tickets directory exists at "(?P<dir_path>[^"]+)" with ticket "(?P<ticket_id>[^"]+)" titled "(?P<title>[^"]+)"')
 def step_separate_tickets_dir(context, dir_path, ticket_id, title):
     """Create a separate tickets directory with a ticket."""

@@ -12,6 +12,20 @@ Feature: Ticket Creation
     And the output should match a ticket ID pattern
     And a ticket file should exist with title "My first ticket"
 
+  Scenario: Ticket ID falls back to first three letters of project name
+    Given the tickets directory does not exist
+    And I am in subdirectory "metagent-0"
+    When I run "ticket create 'Scoped ticket'"
+    Then the command should succeed
+    And the output should match pattern "^met-[a-z0-9]{4}$"
+
+  Scenario: Ticket ID uses repo-local prefix config when present
+    Given I am in subdirectory "metagent-0"
+    And the tickets config has prefix "mg"
+    When I run "ticket create 'Configured prefix ticket'"
+    Then the command should succeed
+    And the output should match pattern "^mg-[a-z0-9]{4}$"
+
   Scenario: Create a ticket with default title
     When I run "ticket create"
     Then the command should succeed

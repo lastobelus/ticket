@@ -45,11 +45,23 @@ Feature: Ticket Status Management
     And the output should be "Updated test-0001 -> open"
     And ticket "test-0001" should have field "status" with value "open"
 
+  Scenario: Draft command sets status to draft
+    When I run "ticket draft test-0001"
+    Then the command should succeed
+    And the output should be "Updated test-0001 -> draft"
+    And ticket "test-0001" should have field "status" with value "draft"
+
+  Scenario: Set status to draft
+    When I run "ticket status test-0001 draft"
+    Then the command should succeed
+    And the output should be "Updated test-0001 -> draft"
+    And ticket "test-0001" should have field "status" with value "draft"
+
   Scenario: Invalid status value
     When I run "ticket status test-0001 invalid"
     Then the command should fail
     And the output should contain "Error: invalid status 'invalid'"
-    And the output should contain "open in_progress closed"
+    And the output should contain "open in_progress closed draft"
 
   Scenario: Status of non-existent ticket
     When I run "ticket status nonexistent open"

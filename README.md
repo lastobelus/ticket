@@ -29,11 +29,12 @@ yay -S ticket  # or paru, etc.
 
 **From source (auto-updates on git pull):**
 ```bash
-git clone https://github.com/wedow/ticket.git
+git clone https://github.com/lastobelus/ticket.git
 cd ticket && ln -s "$PWD/ticket" ~/.local/bin/tk
+export PATH="$PWD/plugins:$PATH"
 ```
 
-**Or** just copy `ticket` to somewhere in your PATH.
+**Or** just copy `ticket` to somewhere in your PATH and ensure `plugins/` is also on your `PATH` when using plugin commands such as `tk list` or `tk query`.
 
 ## Requirements
 
@@ -70,7 +71,8 @@ Commands:
   start <id>               Set status to in_progress
   close <id>               Set status to closed
   reopen <id>              Set status to open
-  status <id> <status>     Update status (open|in_progress|closed)
+  draft <id>               Set status to draft
+  status <id> <status>     Update status (open|in_progress|closed|draft)
   dep <id> <dep-id>        Add dependency (id depends on dep-id)
   dep tree [--full] <id>   Show dependency tree (--full disables dedup)
   dep cycle                Find dependency cycles in open tickets
@@ -94,6 +96,16 @@ Bundled plugins (ticket-extras):
 Searches parent directories for .tickets/ (override with TICKETS_DIR env var)
 Supports partial ID matching (e.g., 'tk show 5c4' matches 'nw-5c46')
 ```
+
+## Prefix Configuration
+
+Ticket IDs use a repo-local prefix when `.tickets/config` contains:
+
+```yaml
+prefix: met
+```
+
+If no prefix is configured, `tk create` falls back to the first three letters of the project name.
 
 ## Plugins
 

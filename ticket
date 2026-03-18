@@ -77,17 +77,51 @@ _sed_i() {
     sed "$@" "$file" > "$tmp" && mv "$tmp" "$file"
 }
 
-# Generate ticket ID from directory name + random string
+# Generate ticket ID from configured prefix + random string
+project_root_for_ticket() {
+    local tickets_parent
+    tickets_parent=$(cd "$(dirname "$TICKETS_DIR")" && pwd -P)
+
+    local git_root
+    git_root=$(git -C "$tickets_parent" rev-parse --show-toplevel 2>/dev/null || true)
+    if [[ -n "$git_root" ]]; then
+        echo "$git_root"
+        return 0
+    fi
+
+    echo "$tickets_parent"
+}
+
+configured_prefix() {
+    local config_path prefix
+    config_path="$TICKETS_DIR/config"
+
+    if [[ -f "$config_path" ]]; then
+        prefix=$(sed -n 's/^prefix:[[:space:]]*//p' "$config_path" | head -1 | tr -d '[:space:]')
+        if [[ -n "$prefix" ]]; then
+            echo "$prefix"
+            return 0
+        fi
+    fi
+}
+
+default_prefix() {
+    local project_root dir_name normalized
+    project_root=$(project_root_for_ticket)
+    dir_name=$(basename "$project_root")
+    normalized=$(echo "$dir_name" | tr '[:upper:]' '[:lower:]' | tr -cd 'a-z0-9')
+
+    if [[ -n "$normalized" ]]; then
+        echo "${normalized:0:3}"
+    else
+        echo "tk"
+    fi
+}
+
 generate_id() {
-    local dir_name
-    dir_name=$(basename "$(pwd)")
-
-    # Extract first letter of each hyphenated/underscored segment
     local prefix
-    prefix=$(echo "$dir_name" | sed 's/[-_]/ /g' | awk '{for(i=1;i<=NF;i++) printf substr($i,1,1)}')
-
-    # Fallback to first 3 chars if single segment (prefix too short)
-    [[ ${#prefix} -lt 2 ]] && prefix="${dir_name:0:3}"
+    prefix=$(configured_prefix)
+    [[ -z "$prefix" ]] && prefix=$(default_prefix)
 
     # 4-char random lower case alphanumeric string
     local hash
@@ -234,7 +268,7 @@ cmd_create() {
 }
 
 # Valid statuses
-VALID_STATUSES="open in_progress closed"
+VALID_STATUSES="open in_progress closed draft"
 
 validate_status() {
     local status="$1"
@@ -286,6 +320,14 @@ cmd_reopen() {
         return 1
     fi
     cmd_status "$1" "open"
+}
+
+cmd_draft() {
+    if [[ $# -lt 1 ]]; then
+        echo "Usage: $(basename "$0") draft <id>" >&2
+        return 1
+    fi
+    cmd_status "$1" "draft"
 }
 
 cmd_dep_tree() {
@@ -1279,7 +1321,8 @@ Commands:
   start <id>               Set status to in_progress
   close <id>               Set status to closed
   reopen <id>              Set status to open
-  status <id> <status>     Update status (open|in_progress|closed)
+  draft <id>               Set status to draft
+  status <id> <status>     Update status (open|in_progress|closed|draft)
   dep <id> <dep-id>        Add dependency (id depends on dep-id)
   dep tree [--full] <id>   Show dependency tree (--full disables dedup)
   dep cycle                Find dependency cycles in open tickets
@@ -1364,6 +1407,7 @@ case "${1:-help}" in
     start)  shift; cmd_start "$@" ;;
     close)  shift; cmd_close "$@" ;;
     reopen) shift; cmd_reopen "$@" ;;
+    draft) shift; cmd_draft "$@" ;;
     status) shift; cmd_status "$@" ;;
     dep)    shift; cmd_dep "$@" ;;
     undep)  shift; cmd_undep "$@" ;;
